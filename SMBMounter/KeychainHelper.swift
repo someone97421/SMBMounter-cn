@@ -36,8 +36,8 @@ class KeychainHelper {
             kSecAttrService as String: service,
             kSecAttrAccount as String: shareID.uuidString,
             kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-            kSecUseDataProtectionKeychain as String: true
+            // 与保存、更新和删除保持一致，读取普通登录钥匙串。
+            kSecMatchLimit as String: kSecMatchLimitOne
         ]
         
         var result: AnyObject?

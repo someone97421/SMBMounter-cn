@@ -5,6 +5,15 @@ enum MountStatus: String, Codable {
     case disconnected = "Disconnected"
     case connecting = "Connecting..."
     case error = "Error"
+
+    var textKey: AppText {
+        switch self {
+        case .mounted: return .connected
+        case .disconnected: return .disconnected
+        case .connecting: return .connecting
+        case .error: return .error
+        }
+    }
     
     var color: String {
         switch self {

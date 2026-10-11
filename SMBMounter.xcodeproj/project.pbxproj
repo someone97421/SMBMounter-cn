@@ -85,6 +85,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				"zh-Hans",
 				Base,
 			);
 			mainGroup = FA0B7AD32F53243200BE0C89;
@@ -253,6 +254,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = SMBMounter/SMBMounter.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -267,6 +269,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = SMBMounter;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "SMBMounter 需要通过访达连接和挂载您配置的 SMB/WebDAV 网络共享。";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Developed by Kevin Tobler - www.kevintobler.ch";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -293,6 +296,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
+				CODE_SIGN_ENTITLEMENTS = SMBMounter/SMBMounter.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -307,6 +311,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = SMBMounter;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "SMBMounter 需要通过访达连接和挂载您配置的 SMB/WebDAV 网络共享。";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "Developed by Kevin Tobler - www.kevintobler.ch";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

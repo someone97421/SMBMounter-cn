@@ -38,6 +38,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         popover.contentViewController = NSHostingController(
             rootView: ContentView()
                 .environmentObject(ShareManager.shared)
+                .environmentObject(AppLocalization.shared)
         )
         self.popover = popover
     }

@@ -10,6 +10,7 @@ struct ShareEditView: View {
     let onSave: (SMBShare, String) -> Void
     
     @Environment(\.dismiss) var dismiss
+    @EnvironmentObject var localization: AppLocalization
     
     @State private var name: String = ""
     @State private var connectionProtocol: ShareProtocol = .smb
@@ -25,8 +26,8 @@ struct ShareEditView: View {
     
     var title: String {
         switch mode {
-        case .add: return "Add Share"
-        case .edit: return "Edit Share"
+        case .add: return localization.text(.addShare)
+        case .edit: return localization.text(.editShare)
         }
     }
     
@@ -56,16 +57,18 @@ struct ShareEditView: View {
             Divider()
             
             Form {
-                Section("General") {
+                Section(localization.text(.general)) {
                     HStack {
-                        Text("Name")
+                        Text(localization.text(.name))
                             .frame(width: 100, alignment: .trailing)
                             .foregroundColor(.secondary)
-                        TextField("My Network Drive", text: $name)
+                        TextField(localization.text(.name), text: $name,
+                                  prompt: Text(localization.text(.namePlaceholder)))
+                            .labelsHidden()
                     }
                     
                     HStack {
-                        Text("Protocol")
+                        Text(localization.text(.connectionProtocol))
                             .frame(width: 100, alignment: .trailing)
                             .foregroundColor(.secondary)
                         Picker("", selection: $connectionProtocol) {
@@ -78,10 +81,13 @@ struct ShareEditView: View {
                     }
 
                     HStack {
-                        Text("Host / IP")
+                        Text(localization.text(.host))
                             .frame(width: 100, alignment: .trailing)
                             .foregroundColor(.secondary)
-                        TextField("192.168.1.100 or server.local", text: $host)
+                        TextField(localization.text(.host), text: $host,
+                                  prompt: Text(localization.text(.hostPlaceholder)))
+                            .labelsHidden()
+                            .autocorrectionDisabled()
                     }
 
                     if connectionProtocol == .webdav {
@@ -100,61 +106,71 @@ struct ShareEditView: View {
                         }
 
                         HStack {
-                            Text("Port")
+                            Text(localization.text(.port))
                                 .frame(width: 100, alignment: .trailing)
                                 .foregroundColor(.secondary)
-                            TextField("443", text: $port)
-                                .multilineTextAlignment(.trailing)
+                            TextField(localization.text(.port), text: $port,
+                                      prompt: Text(defaultWebDAVPort))
+                                .labelsHidden()
                         }
                     }
                     
                     HStack {
-                        Text("Share Name")
+                        Text(localization.text(.shareName))
                             .frame(width: 100, alignment: .trailing)
                             .foregroundColor(.secondary)
-                        TextField("SharedFolder", text: $shareName)
+                        TextField(localization.text(.shareName), text: $shareName,
+                                  prompt: Text(localization.text(.shareNamePlaceholder)))
+                            .labelsHidden()
+                            .autocorrectionDisabled()
                     }
                     
                     HStack {
-                        Text("Mount Point")
+                        Text(localization.text(.mountPoint))
                             .frame(width: 100, alignment: .trailing)
                             .foregroundColor(.secondary)
-                        Text(mountPoint.isEmpty ? "/Volumes/\(shareName.isEmpty ? "ShareName" : shareName)" : mountPoint)
+                        Text(mountPoint.isEmpty ? "/Volumes/\(shareName.isEmpty ? localization.text(.mountPointPlaceholder) : shareName)" : mountPoint)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .foregroundColor(.secondary)
                             .textSelection(.enabled)
                     }
                     
                     HStack {
-                        Text("Auto-Mount")
+                        Text(localization.text(.autoMount))
                             .frame(width: 100, alignment: .trailing)
                             .foregroundColor(.secondary)
                         Toggle("", isOn: $autoMount)
                             .labelsHidden()
-                        Text("Automatically connect and reconnect on disconnect")
+                        Text(localization.text(.autoMountHint))
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
                 }
                 
-                Section("Credentials (optional)") {
+                Section(localization.text(.credentials)) {
                     HStack {
-                        Text("Username")
+                        Text(localization.text(.username))
                             .frame(width: 100, alignment: .trailing)
                             .foregroundColor(.secondary)
-                        TextField("domain\\user or user", text: $username)
+                        TextField(localization.text(.username), text: $username,
+                                  prompt: Text(localization.text(.usernamePlaceholder)))
+                            .labelsHidden()
                             .autocorrectionDisabled()
                     }
                     
                     HStack {
-                        Text("Password")
+                        Text(localization.text(.password))
                             .frame(width: 100, alignment: .trailing)
                             .foregroundColor(.secondary)
                         if showPassword {
-                            TextField("Password", text: $password)
+                            TextField(localization.text(.password), text: $password,
+                                      prompt: Text(localization.text(.password)))
+                                .labelsHidden()
                                 .autocorrectionDisabled()
                         } else {
-                            SecureField("Password", text: $password)
+                            SecureField(localization.text(.password), text: $password,
+                                        prompt: Text(localization.text(.password)))
+                                .labelsHidden()
                         }
                         Button {
                             showPassword.toggle()
@@ -163,15 +179,17 @@ struct ShareEditView: View {
                         }
                         .buttonStyle(.plain)
                         .foregroundColor(.secondary)
+                        .help(localization.text(showPassword ? .hidePassword : .showPassword))
+                        .accessibilityLabel(localization.text(showPassword ? .hidePassword : .showPassword))
                     }
                     
-                    Text("The password is securely stored in the macOS Keychain.")
+                    Text(localization.text(.keychainHint))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
                 
                 if !host.isEmpty && !shareName.isEmpty {
-                    Section("Preview") {
+                    Section(localization.text(.preview)) {
                         Text(previewURL)
                             .font(.system(.caption, design: .monospaced))
                             .foregroundColor(.secondary)
@@ -179,14 +197,16 @@ struct ShareEditView: View {
                 }
             }
             .formStyle(.grouped)
+            .textFieldStyle(.roundedBorder)
+            .multilineTextAlignment(.leading)
             
             Divider()
             
             HStack {
-                Button("Cancel") { dismiss() }
+                Button(localization.text(.cancel)) { dismiss() }
                     .keyboardShortcut(.escape)
                 Spacer()
-                Button("Save") {
+                Button(localization.text(.save)) {
                     save()
                     dismiss()
                 }
@@ -197,6 +217,7 @@ struct ShareEditView: View {
             .padding()
         }
         .frame(width: 500, height: 540)
+        .environment(\.locale, localization.locale)
         .onAppear(perform: loadExisting)
         .onChange(of: connectionProtocol) { _, newValue in
             if newValue == .webdav && port.trimmingCharacters(in: .whitespaces).isEmpty {
@@ -289,4 +310,5 @@ struct ShareEditView: View {
 
 #Preview {
     ShareEditView(mode: .add) { _, _ in }
+        .environmentObject(AppLocalization.shared)
 }

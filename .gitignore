@@ -12,3 +12,6 @@ build/
 
 # Swift Package Manager
 .build/
+
+# 安装包与发布产物
+dist/

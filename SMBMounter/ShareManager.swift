@@ -691,25 +691,31 @@ class ShareManager: ObservableObject {
 
     // MARK: - Finder Mount
 
-    private func runFinderMount(urlString: String, allowsUserInteraction: Bool, isMounted: () -> Bool) {
+    private func runFinderMount(urlString: String, allowsUserInteraction: Bool, isMounted: () -> Bool) -> AppText? {
         let appleScriptTimeout = allowsUserInteraction ? interactiveFinderAppleScriptTimeoutSeconds : finderAppleScriptTimeoutSeconds
         let executionTimeout = allowsUserInteraction ? interactiveFinderExecutionTimeout : finderExecutionTimeout
+        // 以参数传入连接 URL，避免密码或共享名称中的字符破坏 AppleScript。
         let script = """
-        try
-            tell application "Finder"
-                with timeout of \(appleScriptTimeout) seconds
-                    mount volume "\(urlString)"
-                end timeout
-            end tell
-        on error
-        end try
+        on run argv
+            set mountURL to item 1 of argv
+            try
+                tell application "Finder"
+                    with timeout of \(appleScriptTimeout) seconds
+                        mount volume mountURL
+                    end timeout
+                end tell
+            on error errorMessage number errorNumber
+                return errorNumber as text
+            end try
+        end run
         """
 
         let task = Process()
         task.launchPath = "/usr/bin/osascript"
-        task.arguments = ["-e", script]
-        task.standardError = Pipe()
-        task.standardOutput = Pipe()
+        task.arguments = ["-e", script, urlString]
+        let output = Pipe()
+        task.standardOutput = output
+        task.standardError = FileHandle.nullDevice
 
         do {
             try task.run()
@@ -718,18 +724,28 @@ class ShareManager: ObservableObject {
             while task.isRunning && Date() < deadline {
                 if isMounted() {
                     task.terminate()
-                    break
+                    task.waitUntilExit()
+                    return nil
                 }
                 Thread.sleep(forTimeInterval: 0.1)
             }
 
             if task.isRunning {
                 task.terminate()
+                task.waitUntilExit()
+                return .mountTimeout
             }
 
             task.waitUntilExit()
+            let data = output.fileHandleForReading.readDataToEndOfFile()
+            let result = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if let errorNumber = Int(result) {
+                if errorNumber == -1712 { return .mountTimeout }
+                return (errorNumber == -1743 || errorNumber == -10004) ? .automationDenied : .mountFailed
+            }
+            return task.terminationStatus == 0 ? nil : .mountFailed
         } catch {
-            return
+            return .mountFailed
         }
     }
 
@@ -822,9 +838,9 @@ class ShareManager: ObservableObject {
                     self.shares[idx].status = .disconnected
                     switch self.shares[idx].connectionProtocol {
                     case .smb:
-                        self.shares[idx].lastError = "Host aktuell nicht erreichbar (SMB Port 445)."
+                        self.shares[idx].lastError = AppText.smbUnavailable.rawValue
                     case .webdav:
-                        self.shares[idx].lastError = "Host aktuell nicht erreichbar (WebDAV Port 80/443)."
+                        self.shares[idx].lastError = AppText.webDAVUnavailable.rawValue
                     }
                     self.scheduleOneExtraRetryIfNeeded(for: shareID)
                 }
@@ -848,7 +864,7 @@ class ShareManager: ObservableObject {
 
         guard shouldKeepRetrying(share) else { return }
         let allowsUserInteraction = share.username.isEmpty || password.isEmpty
-        runFinderMount(urlString: urlString, allowsUserInteraction: allowsUserInteraction) {
+        let mountError = runFinderMount(urlString: urlString, allowsUserInteraction: allowsUserInteraction) {
             self.isMounted(share)
         }
 
@@ -871,11 +887,15 @@ class ShareManager: ObservableObject {
                 self.shares[idx].status = .mounted
                 self.shares[idx].lastConnected = Date()
                 self.shares[idx].lastError = nil
-                self.sendNotification(title: "Connected", body: "\(self.shares[idx].name) successfully connected.")
+                let localization = AppLocalization.shared
+                self.sendNotification(
+                    title: localization.text(.connected),
+                    body: localization.format(.connectionSucceeded, self.shares[idx].name)
+                )
             } else {
                 self.failCount[shareID, default: 0] += 1
                 self.shares[idx].status = .disconnected
-                self.shares[idx].lastError = nil
+                self.shares[idx].lastError = (mountError ?? .mountFailed).rawValue
                 self.scheduleOneExtraRetryIfNeeded(for: shareID)
             }
 

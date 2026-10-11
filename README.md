@@ -9,6 +9,27 @@ Version **1.5** – developed by **Kevin Tobler** 🌐 [www.kevintobler.ch](http
 
 ---
 
+## 界面语言
+
+应用默认使用**简体中文**。点击菜单栏中的 SMBMounter 图标，在主界面顶部点击**地球图标**，即可切换为 **English** 或**简体中文**。
+
+语言切换即时生效，无需重启；应用会保存选择，并在下次启动时继续使用。主界面、共享编辑表单、连接状态、提示和连接成功通知均支持中英文。
+
+## 自动构建与发布
+
+推送 `main` 后，GitHub Actions 会构建 Apple Silicon + Intel 通用版 DMG，并上传名为 `SMBMounter-macOS-universal` 的构建产物（保留 30 天）。也可在 Actions 中手动运行“构建与发布 DMG”。
+
+推送 `v*` 标签时，工作流会在构建成功后自动创建 GitHub Release，上传 DMG 和 SHA-256 校验文件。发布前请更新工程版本与 `docs/发布说明.md`。仅推送 `main` 不会创建 Release。
+
+构建使用 `macos-15` 与 Xcode 26.3，无需额外配置密钥；Release 使用工作流自带的 `GITHUB_TOKEN`。当前为临时签名，包含访达自动化权限，未进行 Developer ID 签名和 Apple 公证。
+
+本地也可执行 `bash scripts/package-dmg.sh`，产物保存在 `dist/`，该目录不提交到 Git。
+
+**已知问题：** 以 IP 配置服务器、但系统以主机名挂载时，可能误判为未连接；本地挂载路径带 `-1` 等后缀时，打开和断开操作可能使用错误路径。这部分尚未修复。
+
+
+---
+
 ## 🔄 Changelog
 
 ### 🆕 Version 1.x

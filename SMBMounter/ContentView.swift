@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var manager: ShareManager
+    @EnvironmentObject var localization: AppLocalization
     @State private var showAddSheet = false
     @State private var editingShare: SMBShare? = nil
     
@@ -14,13 +15,27 @@ struct ContentView: View {
                 Text("SMBMounter")
                     .font(.headline)
                 Spacer()
+                Menu {
+                    Picker(localization.text(.language), selection: $localization.language) {
+                        ForEach(AppLanguage.allCases) { language in
+                            Text(language.displayName).tag(language)
+                        }
+                    }
+                } label: {
+                    Image(systemName: "globe")
+                }
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                .help(localization.text(.language))
+                .accessibilityLabel(localization.text(.language))
+
                 Button {
                     manager.mountAllAutoShares()
                 } label: {
                     Image(systemName: "arrow.clockwise")
                 }
                 .buttonStyle(.plain)
-                .help("Connect all Auto-Shares")
+                .help(localization.text(.connectAutoShares))
                 
                 Button {
                     showAddSheet = true
@@ -29,7 +44,7 @@ struct ContentView: View {
                         .font(.title2)
                 }
                 .buttonStyle(.plain)
-                .help("Add Share")
+                .help(localization.text(.addShare))
             }
             .padding()
             .background(Color(NSColor.windowBackgroundColor))
@@ -41,14 +56,14 @@ struct ContentView: View {
                     Image(systemName: "externaldrive.badge.wifi")
                         .font(.system(size: 48))
                         .foregroundColor(.secondary)
-                    Text("No shares configured")
+                    Text(localization.text(.noShares))
                         .font(.headline)
                         .foregroundColor(.secondary)
-                    Text("Click + to add an SMB/WebDAV share")
+                    Text(localization.text(.addShareHint))
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
-                    Button("Add Share") {
+                    Button(localization.text(.addShare)) {
                         showAddSheet = true
                     }
                     .buttonStyle(.borderedProminent)
@@ -60,14 +75,14 @@ struct ContentView: View {
                     ForEach($manager.shares) { $share in
                         ShareRowView(share: $share)
                             .contextMenu {
-                                Button("Edit") { editingShare = share }
+                                Button(localization.text(.edit)) { editingShare = share }
                                 Divider()
-                                Button("Connect now") { manager.mount(share) }
-                                Button("Disconnect") { manager.unmount(share) }
+                                Button(localization.text(.connectNow)) { manager.mount(share) }
+                                Button(localization.text(.disconnect)) { manager.unmount(share) }
                                 Divider()
-                                Button("Open in Finder") { openInFinder(share) }
+                                Button(localization.text(.openInFinder)) { openInFinder(share) }
                                 Divider()
-                                Button("Delete", role: .destructive) { manager.removeShare(share) }
+                                Button(localization.text(.delete), role: .destructive) { manager.removeShare(share) }
                             }
                     }
                     .onDelete { indices in
@@ -90,7 +105,7 @@ struct ContentView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
                 Spacer()
-                Button("Quit") {
+                Button(localization.text(.quit)) {
                     NSApp.terminate(nil)
                 }
                 .buttonStyle(.bordered)
@@ -101,6 +116,7 @@ struct ContentView: View {
             .padding(.vertical, 8)
         }
         .frame(width: 400, height: 480)
+        .environment(\.locale, localization.locale)
         .sheet(isPresented: $showAddSheet) {
             ShareEditView(mode: .add) { share, password in
                 manager.addShare(share, password: password)
@@ -126,7 +142,7 @@ struct ContentView: View {
     var overallStatusText: String {
         let mounted = manager.shares.filter { $0.status == .mounted }.count
         let total = manager.shares.count
-        return "\(mounted)/\(total) connected"
+        return localization.format(.connectedCount, mounted, total)
     }
     
     func openInFinder(_ share: SMBShare) {

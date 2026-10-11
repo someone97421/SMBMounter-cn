@@ -3,6 +3,7 @@ import SwiftUI
 struct ShareRowView: View {
     @Binding var share: SMBShare
     @EnvironmentObject var manager: ShareManager
+    @EnvironmentObject var localization: AppLocalization
     
     var body: some View {
         HStack(spacing: 12) {
@@ -17,7 +18,7 @@ struct ShareRowView: View {
                         Image(systemName: "bolt.fill")
                             .font(.caption2)
                             .foregroundColor(.accentColor)
-                            .help("Auto-Mount active")
+                            .help(localization.text(.autoMountActive))
                     }
                 }
                 
@@ -25,13 +26,14 @@ struct ShareRowView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
                 
-                if let error = share.lastError, share.status == .error {
-                    Text(error)
+                if let error = share.lastError, share.status == .error || share.status == .disconnected {
+                    Text(localizedError(error))
                         .font(.caption2)
                         .foregroundColor(.red)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .help(localizedError(error))
                 } else if let date = share.lastConnected, share.status == .mounted {
-                    Text("Connected since \(date.formatted(.dateTime.hour().minute()))")
+                    Text(localization.format(.connectedSince, date.formatted(.dateTime.hour().minute().locale(localization.locale))))
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
@@ -39,7 +41,7 @@ struct ShareRowView: View {
             
             Spacer()
             
-            Text(share.status.rawValue)
+            Text(localization.text(share.status.textKey))
                 .font(.caption)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
@@ -58,11 +60,20 @@ struct ShareRowView: View {
                     .foregroundColor(manager.isMounted(share) ? .orange : .accentColor)
             }
             .buttonStyle(.plain)
-            .help(manager.isMounted(share) ? "Disconnect" : "Connect")
+            .help(localization.text(manager.isMounted(share) ? .disconnect : .connect))
             .disabled(share.status == .connecting)
         }
         .padding(.vertical, 6)
         .padding(.horizontal, 4)
+    }
+
+    private func localizedError(_ error: String) -> String {
+        guard let key = AppText(rawValue: error) else { return error }
+        if key == .webDAVUnavailable {
+            let port = share.port > 0 ? share.port : share.webDAVScheme.defaultPort
+            return localization.format(key, port)
+        }
+        return localization.text(key)
     }
     
     @ViewBuilder

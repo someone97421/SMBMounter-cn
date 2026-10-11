@@ -8,6 +8,7 @@ struct SMBMounterApp: App {
         Settings {
             ContentView()
                 .environmentObject(ShareManager.shared)
+                .environmentObject(AppLocalization.shared)
         }
     }
 }
